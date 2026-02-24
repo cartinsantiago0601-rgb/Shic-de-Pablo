@@ -1,0 +1,1740 @@
+import { useState, useEffect, useRef } from 'react';
+
+// ============================================
+// DATOS DEL NEGOCIO - SHIC DE PABLO TATTOO
+// ============================================
+const businessData = {
+  name: "Shic de Pablo Tattoo",
+  shortName: "Shic de Pablo",
+  tagline: "Arte en tu Piel",
+  subtitle: "Tatuajes únicos que cuentan tu historia",
+  description: "Shic de Pablo Tattoo es un estudio de tatuajes de autor en el corazón de Madrid. Con más de 10 años de experiencia, Pablo y su equipo crean obras de arte únicas que reflejan la personalidad y las historias de cada cliente. Especialistas en realismo, blackwork, fine line y diseños personalizados.",
+  phone: "+34 666 123 456",
+  whatsapp: "34666123456",
+  email: "info@shicdepablo.com",
+  address: "Calle de Alcalá, 123, 28009 Madrid",
+  coordinates: { lat: 40.4074657, lng: -3.6472003 },
+  rating: 5.0,
+  totalReviews: 89,
+  priceRange: "€€",
+  googleMapsUrl: "https://www.google.es/maps/place/Shic+de+pablo+Tattoo/@40.4074657,-3.6497752,17z",
+  instagram: "@shicdepablotattoo",
+  schedule: {
+    lunes: { open: "", close: "", closed: true },
+    martes: { open: "11:00", close: "20:00", closed: false },
+    miércoles: { open: "11:00", close: "20:00", closed: false },
+    jueves: { open: "11:00", close: "20:00", closed: false },
+    viernes: { open: "11:00", close: "20:00", closed: false },
+    sábado: { open: "11:00", close: "18:00", closed: false },
+    domingo: { open: "", close: "", closed: true },
+  } as Record<string, { open: string; close: string; closed: boolean }>,
+  services: [
+    { id: 1, name: "Tatuaje Personalizado", price: "Consultar", description: "Diseñamos juntos tu tatuaje único. Cada pieza es una obra de arte creada especialmente para ti.", icon: "🎨", category: "custom", duration: "Variable" },
+    { id: 2, name: "Realismo", price: "Desde 200€", description: "Retratos, animales, naturaleza con un nivel de detalle fotográfico impresionante.", icon: "📸", category: "style", duration: "4-8h" },
+    { id: 3, name: "Blackwork", price: "Desde 150€", description: "Diseños en negro sólido, geométricos, tribales modernos y patrones oscuros.", icon: "⬛", category: "style", duration: "3-6h" },
+    { id: 4, name: "Fine Line", price: "Desde 100€", description: "Líneas finas y delicadas, minimalistas y elegantes. Perfecto para diseños sutiles.", icon: "✒️", category: "style", duration: "2-4h" },
+    { id: 5, name: "Neotradicional", price: "Desde 180€", description: "Colores vibrantes, líneas gruesas y diseños clásicos con un toque moderno.", icon: "🌸", category: "style", duration: "3-6h" },
+    { id: 6, name: "Cover Up", price: "Desde 250€", description: "Transformamos tatuajes antiguos en nuevas obras de arte que amarás.", icon: "🔄", category: "special", duration: "4-8h" },
+    { id: 7, name: "Lettering", price: "Desde 80€", description: "Tipografía artística, frases, nombres y fechas con estilos únicos.", icon: "✍️", category: "style", duration: "1-3h" },
+    { id: 8, name: "Micropigmentación", price: "Desde 150€", description: "Cejas, labios y línea de ojos. Maquillaje semipermanente profesional.", icon: "👁️", category: "special", duration: "2-3h" },
+    { id: 9, name: "Piercing", price: "Desde 30€", description: "Perforaciones profesionales con joyería de alta calidad. Incluye cuidados.", icon: "💎", category: "extra", duration: "30 min" },
+    { id: 10, name: "Retoque", price: "Desde 50€", description: "Refresca y mejora tus tatuajes existentes. Mantenimiento de color y líneas.", icon: "🔧", category: "extra", duration: "1-2h" },
+  ],
+  reviews: [
+    { id: 1, author: "Carlos M.", rating: 5, text: "Pablo es un artista increíble. Me hizo un tatuaje realista de mi perro y quedó espectacular. La atención al detalle es impresionante. El estudio es muy limpio y profesional. 100% recomendado.", date: "Hace 3 días" },
+    { id: 2, author: "Laura S.", rating: 5, text: "Mi primera experiencia tatuándome y no podía haber elegido mejor lugar. Pablo me explicó todo el proceso, me hizo sentir super cómoda y el resultado superó mis expectativas. ¡Volveré seguro!", date: "Hace 1 semana" },
+    { id: 3, author: "David R.", rating: 5, text: "Ya llevo 4 tatuajes con Pablo y todos son obras de arte. Su estilo en blackwork es brutal. El estudio tiene un ambiente muy guay y siempre ponen buena música.", date: "Hace 1 semana" },
+    { id: 4, author: "Ana García", rating: 5, text: "Me hice un cover up de un tatuaje que odiaba y ahora tengo una pieza que me encanta. Pablo supo exactamente cómo transformarlo. Profesionalidad máxima.", date: "Hace 2 semanas" },
+    { id: 5, author: "Miguel Ángel", rating: 5, text: "Fui a hacerme un tatuaje pequeño de lettering y la experiencia fue genial. Precio justo, trabajo impecable y el trato muy cercano. El estudio está muy bien ubicado.", date: "Hace 2 semanas" },
+    { id: 6, author: "Patricia López", rating: 5, text: "El mejor estudio de Madrid sin duda. Pablo tiene un talento especial para el realismo. Mi tatuaje parece una foto. Las instalaciones son impecables.", date: "Hace 3 semanas" },
+    { id: 7, author: "Roberto Fernández", rating: 5, text: "Vine desde Sevilla solo para tatuarme con Pablo después de ver su trabajo en Instagram. No me arrepiento. El viaje valió totalmente la pena.", date: "Hace 1 mes" },
+    { id: 8, author: "Elena Martín", rating: 5, text: "Me hizo la micropigmentación de cejas y quedaron perfectas. Muy natural, exactamente lo que quería. El proceso fue muy profesional y apenas dolió.", date: "Hace 1 mes" },
+    { id: 9, author: "Javier Torres", rating: 5, text: "Increíble artista. Me hizo un manga completo en blackwork y es una obra maestra. 4 sesiones y cada una fue perfecta. Gran ambiente en el estudio.", date: "Hace 1 mes" },
+    { id: 10, author: "Cristina Ruiz", rating: 5, text: "Mi tatuaje fine line quedó precioso. Muy delicado y elegante, justo lo que buscaba. Pablo entendió perfectamente la idea y la mejoró con sus aportes.", date: "Hace 2 meses" },
+  ],
+  attributes: ["Solo con cita previa", "Diseños personalizados", "Material desechable", "Autoclave", "Tintas veganas", "WiFi", "Ambiente relajado", "Buena música"],
+  gallery: [
+    { id: 1, category: "realismo", alt: "Tatuaje realista de retrato" },
+    { id: 2, category: "blackwork", alt: "Diseño blackwork geométrico" },
+    { id: 3, category: "fineline", alt: "Tatuaje fine line floral" },
+    { id: 4, category: "estudio", alt: "Interior del estudio" },
+    { id: 5, category: "realismo", alt: "Tatuaje realista de animal" },
+    { id: 6, category: "neotradicional", alt: "Diseño neotradicional colorido" },
+    { id: 7, category: "blackwork", alt: "Manga blackwork completo" },
+    { id: 8, category: "artista", alt: "Pablo trabajando en el estudio" },
+    { id: 9, category: "fineline", alt: "Tatuaje minimalista" },
+    { id: 10, category: "estudio", alt: "Zona de trabajo" },
+    { id: 11, category: "realismo", alt: "Retrato realista en color" },
+    { id: 12, category: "neotradicional", alt: "Tatuaje tradicional moderno" },
+  ],
+};
+
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
+export function App() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
+  const [selectedService, setSelectedService] = useState<string>('');
+  const [showChat, setShowChat] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<number | null>(null);
+  const [galleryFilter, setGalleryFilter] = useState('all');
+  const [serviceFilter, setServiceFilter] = useState('all');
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!showChat) {
+        setShowChat(true);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const openBookingWithService = (serviceName: string) => {
+    setSelectedService(serviceName);
+    setShowBooking(true);
+  };
+
+  return (
+    <div className="font-inter bg-black text-white">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-red-600 text-white px-4 py-2 rounded-lg z-[9999]">
+        Saltar al contenido principal
+      </a>
+
+      <Header 
+        isMenuOpen={isMenuOpen} 
+        setIsMenuOpen={setIsMenuOpen} 
+        scrolled={scrolled}
+        setShowBooking={setShowBooking}
+      />
+
+      <main id="main-content">
+        <HeroSection setShowBooking={setShowBooking} />
+        <AboutSection />
+        <ServicesSection 
+          serviceFilter={serviceFilter} 
+          setServiceFilter={setServiceFilter} 
+          openBookingWithService={openBookingWithService} 
+        />
+        <GallerySection 
+          lightboxImage={lightboxImage}
+          setLightboxImage={setLightboxImage}
+          galleryFilter={galleryFilter}
+          setGalleryFilter={setGalleryFilter}
+        />
+        <ReviewsSection />
+        <ScheduleSection />
+        <ContactSection />
+      </main>
+
+      <Footer />
+
+      {showBooking && (
+        <BookingModal 
+          onClose={() => { setShowBooking(false); setSelectedService(''); }} 
+          preselectedService={selectedService}
+        />
+      )}
+
+      <Chatbot isOpen={showChat} setIsOpen={setShowChat} setShowBooking={setShowBooking} />
+      <WhatsAppButton />
+    </div>
+  );
+}
+
+// ============================================
+// HEADER COMPONENT
+// ============================================
+function Header({ isMenuOpen, setIsMenuOpen, scrolled, setShowBooking }: {
+  isMenuOpen: boolean;
+  setIsMenuOpen: (open: boolean) => void;
+  scrolled: boolean;
+  setShowBooking: (show: boolean) => void;
+}) {
+  const navLinks = [
+    { href: "#inicio", label: "Inicio" },
+    { href: "#nosotros", label: "Nosotros" },
+    { href: "#servicios", label: "Servicios" },
+    { href: "#galeria", label: "Galería" },
+    { href: "#opiniones", label: "Opiniones" },
+    { href: "#horarios", label: "Horarios" },
+    { href: "#contacto", label: "Contacto" },
+  ];
+
+  return (
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      scrolled 
+        ? 'bg-black/95 backdrop-blur-md shadow-lg shadow-red-900/10' 
+        : 'bg-gradient-to-b from-black/80 to-transparent'
+    }`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          <a href="#inicio" className="flex items-center space-x-3 group">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-600/30 group-hover:shadow-red-600/50 transition-shadow">
+              <span className="text-white text-xl font-bebas font-bold tracking-wider">SP</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bebas text-xl font-bold leading-tight text-white tracking-wider">
+                SHIC DE PABLO
+              </span>
+              <span className="text-xs text-red-500 tracking-widest uppercase">Tattoo Studio</span>
+            </div>
+          </a>
+
+          <nav className="hidden lg:flex items-center space-x-8" aria-label="Navegación principal">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-medium uppercase tracking-wider"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="hidden lg:flex items-center space-x-4">
+            <a
+              href={`tel:${businessData.phone}`}
+              className="text-gray-300 hover:text-red-500 transition-colors text-sm font-medium"
+              aria-label="Llamar al teléfono"
+            >
+              📞 {businessData.phone}
+            </a>
+            <button
+              onClick={() => setShowBooking(true)}
+              className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg text-white font-bold text-sm uppercase tracking-wider transition-all duration-300 shadow-lg shadow-red-600/30 hover:shadow-red-600/50 hover:scale-105"
+            >
+              Pedir Cita
+            </button>
+          </div>
+
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="lg:hidden p-2 rounded-lg transition-colors"
+            aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={isMenuOpen}
+          >
+            <div className="w-6 h-5 relative flex flex-col justify-between">
+              <span className={`w-full h-0.5 bg-white transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+              <span className={`w-full h-0.5 bg-white transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`} />
+              <span className={`w-full h-0.5 bg-white transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+            </div>
+          </button>
+        </div>
+
+        <div className={`lg:hidden transition-all duration-300 overflow-hidden ${isMenuOpen ? 'max-h-96 pb-6' : 'max-h-0'}`}>
+          <nav className="flex flex-col space-y-4 pt-4 bg-black/95 backdrop-blur-md rounded-xl p-4 -mx-4 border border-gray-800" aria-label="Navegación móvil">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMenuOpen(false)}
+                className="text-gray-300 hover:text-red-500 transition-colors text-lg font-medium uppercase tracking-wider"
+              >
+                {link.label}
+              </a>
+            ))}
+            <a href={`tel:${businessData.phone}`} className="text-red-500 font-semibold">
+              📞 {businessData.phone}
+            </a>
+            <button
+              onClick={() => { setShowBooking(true); setIsMenuOpen(false); }}
+              className="w-full py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-lg text-white font-bold uppercase tracking-wider"
+            >
+              Pedir Cita
+            </button>
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ============================================
+// HERO SECTION
+// ============================================
+function HeroSection({ setShowBooking }: { setShowBooking: (show: boolean) => void }) {
+  return (
+    <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=1920')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50" />
+        {/* Red accent overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-red-900/20 via-transparent to-transparent" />
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+        <div className="inline-flex items-center space-x-2 bg-red-900/30 backdrop-blur-sm rounded-full px-5 py-2.5 mb-8 border border-red-600/30">
+          <div className="flex">
+            {[...Array(5)].map((_, i) => (
+              <span key={i} className="text-lg text-red-500">★</span>
+            ))}
+          </div>
+          <span className="text-red-400 font-bold">{businessData.rating}</span>
+          <span className="text-gray-400">({businessData.totalReviews} opiniones)</span>
+        </div>
+
+        <p className="text-red-500 text-sm sm:text-base mb-4 font-bold tracking-[0.4em] uppercase">
+          Tattoo Studio Madrid
+        </p>
+
+        <h1 className="font-bebas text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold mb-6 text-white leading-none tracking-wider">
+          SHIC DE <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">PABLO</span>
+        </h1>
+
+        <p className="text-2xl sm:text-3xl md:text-4xl text-gray-300 mb-4 font-light">
+          {businessData.tagline}
+        </p>
+        <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-10">
+          {businessData.subtitle}
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button
+            onClick={() => setShowBooking(true)}
+            className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg text-white font-bold text-lg uppercase tracking-wider transition-all duration-300 shadow-xl shadow-red-600/30 hover:shadow-red-600/50 hover:scale-105 flex items-center justify-center space-x-2"
+          >
+            <span>🔥</span>
+            <span>Pedir Cita</span>
+          </button>
+          <a
+            href="#galeria"
+            className="w-full sm:w-auto px-10 py-4 border-2 border-gray-600 hover:border-red-500 hover:bg-red-900/20 rounded-lg text-white font-bold text-lg uppercase tracking-wider transition-all duration-300 flex items-center justify-center space-x-2"
+          >
+            <span>🎨</span>
+            <span>Ver Trabajos</span>
+          </a>
+        </div>
+
+        <div className="mt-12 flex flex-wrap justify-center gap-6">
+          {['Solo con cita previa', 'Diseños personalizados', 'Material 100% estéril', '+10 años experiencia'].map((item, i) => (
+            <div key={i} className="flex items-center gap-2 text-gray-400">
+              <span className="text-red-500">✓</span>
+              <span className="text-sm">{item}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-gray-600 rounded-full flex justify-center pt-2">
+            <div className="w-1 h-3 bg-red-500/70 rounded-full animate-scroll" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// ABOUT SECTION
+// ============================================
+function AboutSection() {
+  const stats = [
+    { value: "10+", label: "Años de experiencia" },
+    { value: `${businessData.rating}`, label: "Valoración perfecta" },
+    { value: "2000+", label: "Tatuajes realizados" },
+    { value: "100%", label: "Clientes satisfechos" },
+  ];
+
+  return (
+    <section id="nosotros" className="py-20 lg:py-32 bg-gradient-to-b from-black via-gray-950 to-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div className="relative order-2 lg:order-1">
+            <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl shadow-red-900/20 border border-gray-800">
+              <img
+                src="https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=800"
+                alt="Pablo tatuando en el estudio"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+            <div className="absolute -bottom-6 -right-6 bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-red-500 font-bebas tracking-wider">{businessData.rating}</div>
+                <div className="flex justify-center mt-1">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className="text-red-500">★</span>
+                  ))}
+                </div>
+                <div className="text-gray-500 text-sm mt-1">Puntuación perfecta</div>
+              </div>
+            </div>
+            <div className="absolute -top-4 -left-4 w-24 h-24 bg-red-900/30 rounded-full -z-10 blur-2xl" />
+            <div className="absolute top-10 -right-8 bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg transform rotate-3 uppercase tracking-wider">
+              Artista Profesional
+            </div>
+          </div>
+
+          <div className="order-1 lg:order-2">
+            <span className="text-red-500 font-bold text-sm uppercase tracking-[0.3em]">Sobre Nosotros</span>
+            <h2 className="font-bebas text-4xl lg:text-5xl font-bold mt-4 mb-6 text-white tracking-wider">
+              ARTE CORPORAL{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">PROFESIONAL</span>
+            </h2>
+            <p className="text-gray-400 text-lg leading-relaxed mb-6">
+              {businessData.description}
+            </p>
+            <p className="text-gray-500 leading-relaxed mb-8">
+              Cada tatuaje es una colaboración entre artista y cliente. Nos tomamos el tiempo necesario 
+              para entender tu visión y crear algo verdaderamente especial. Tu piel, tu historia, 
+              nuestro arte.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {businessData.attributes.slice(0, 6).map((attr, i) => (
+                <div key={i} className="flex items-center space-x-2 text-gray-400">
+                  <span className="text-red-500">✓</span>
+                  <span>{attr}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              {stats.map((stat, i) => (
+                <div key={i} className="text-center sm:text-left">
+                  <div className="text-3xl font-bold text-red-500 font-bebas tracking-wider">{stat.value}</div>
+                  <div className="text-gray-500 text-sm mt-1">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// SERVICES SECTION
+// ============================================
+function ServicesSection({ serviceFilter, setServiceFilter, openBookingWithService }: { 
+  serviceFilter: string; 
+  setServiceFilter: (filter: string) => void;
+  openBookingWithService: (name: string) => void;
+}) {
+  const categories = [
+    { id: 'all', label: 'Todos', icon: '🔥' },
+    { id: 'style', label: 'Estilos', icon: '🎨' },
+    { id: 'custom', label: 'Custom', icon: '✨' },
+    { id: 'special', label: 'Especiales', icon: '⭐' },
+    { id: 'extra', label: 'Extras', icon: '💎' },
+  ];
+
+  const filteredServices = serviceFilter === 'all' 
+    ? businessData.services 
+    : businessData.services.filter(item => item.category === serviceFilter);
+
+  return (
+    <section id="servicios" className="py-20 lg:py-32 bg-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <span className="text-red-500 font-bold text-sm uppercase tracking-[0.3em]">Nuestros Servicios</span>
+          <h2 className="font-bebas text-4xl lg:text-5xl font-bold mt-4 mb-6 text-white tracking-wider">
+            ESTILOS &{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">SERVICIOS</span>
+          </h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">
+            Dominamos diferentes estilos para adaptarnos a tu visión. 
+            Cada tatuaje es una pieza única creada especialmente para ti.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setServiceFilter(cat.id)}
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 ${
+                serviceFilter === cat.id
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30'
+                  : 'bg-gray-900 text-gray-400 hover:bg-gray-800 border border-gray-800 hover:border-red-600/50'
+              }`}
+            >
+              <span>{cat.icon}</span>
+              <span>{cat.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredServices.map((service) => (
+            <div
+              key={service.id}
+              className="group bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-red-600/50 transition-all duration-300 hover:shadow-xl hover:shadow-red-900/20 hover:-translate-y-1"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-3xl">{service.icon}</span>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-red-500">{service.price}</span>
+                  <div className="text-xs text-gray-600">{service.duration}</div>
+                </div>
+              </div>
+              <h3 className="font-bebas font-bold text-xl mb-2 text-white group-hover:text-red-500 transition-colors tracking-wider">
+                {service.name}
+              </h3>
+              <p className="text-gray-500 text-sm leading-relaxed mb-4 line-clamp-3">
+                {service.description}
+              </p>
+              <button
+                onClick={() => openBookingWithService(service.name)}
+                className="w-full py-2.5 border border-red-600 text-red-500 hover:bg-red-600 hover:text-white rounded-lg text-sm font-bold uppercase tracking-wider transition-all duration-300"
+              >
+                Consultar
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 text-center">
+          <div className="inline-flex items-center gap-4 bg-gradient-to-r from-red-900/30 to-red-800/20 border border-red-600/30 rounded-xl px-8 py-4">
+            <span className="text-3xl">📸</span>
+            <div className="text-left">
+              <div className="font-bold text-white">Síguenos en Instagram</div>
+              <div className="text-sm text-gray-400">{businessData.instagram} · Últimos trabajos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// GALLERY SECTION
+// ============================================
+function GallerySection({ lightboxImage, setLightboxImage, galleryFilter, setGalleryFilter }: {
+  lightboxImage: number | null;
+  setLightboxImage: (id: number | null) => void;
+  galleryFilter: string;
+  setGalleryFilter: (filter: string) => void;
+}) {
+  const categories = [
+    { id: 'all', label: 'Todo' },
+    { id: 'realismo', label: 'Realismo' },
+    { id: 'blackwork', label: 'Blackwork' },
+    { id: 'fineline', label: 'Fine Line' },
+    { id: 'neotradicional', label: 'Neotradicional' },
+    { id: 'estudio', label: 'Estudio' },
+    { id: 'artista', label: 'Artista' },
+  ];
+
+  const filteredGallery = galleryFilter === 'all' 
+    ? businessData.gallery 
+    : businessData.gallery.filter(img => img.category === galleryFilter);
+
+  const placeholderImages = [
+    "https://images.unsplash.com/photo-1565058379802-bbe93b2f703a?w=600",
+    "https://images.unsplash.com/photo-1542727313-4f3e99aa2568?w=600",
+    "https://images.unsplash.com/photo-1604681630557-5b0d4e3c7e99?w=600",
+    "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?w=600",
+    "https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=600",
+    "https://images.unsplash.com/photo-1562962230-16e4623d36e6?w=600",
+    "https://images.unsplash.com/photo-1569974507005-6dc61f97fb5c?w=600",
+    "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=600",
+    "https://images.unsplash.com/photo-1504609773096-104ff2c73ba4?w=600",
+    "https://images.unsplash.com/photo-1611501282396-47f03d25b28d?w=600",
+    "https://images.unsplash.com/photo-1590246814883-57c511e76d23?w=600",
+    "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=600",
+  ];
+
+  return (
+    <section id="galeria" className="py-20 lg:py-32 bg-gradient-to-b from-black via-gray-950 to-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <span className="text-red-500 font-bold text-sm uppercase tracking-[0.3em]">Portfolio</span>
+          <h2 className="font-bebas text-4xl lg:text-5xl font-bold mt-4 mb-6 text-white tracking-wider">
+            NUESTROS{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">TRABAJOS</span>
+          </h2>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-3 mb-12">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setGalleryFilter(cat.id)}
+              className={`px-5 py-2 rounded-lg text-sm font-bold uppercase tracking-wider transition-all duration-300 ${
+                galleryFilter === cat.id
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30'
+                  : 'bg-gray-900 text-gray-400 hover:bg-gray-800 border border-gray-800'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredGallery.map((image, index) => (
+            <button
+              key={image.id}
+              onClick={() => setLightboxImage(image.id)}
+              className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-gray-800 hover:border-red-600/50 transition-all"
+              aria-label={`Ver imagen: ${image.alt}`}
+            >
+              <img
+                src={placeholderImages[index % placeholderImages.length]}
+                alt={image.alt}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                <span className="text-white text-sm font-medium">{image.alt}</span>
+              </div>
+              <div className="absolute inset-0 border-2 border-red-600 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+            </button>
+          ))}
+        </div>
+
+        {lightboxImage && (
+          <div 
+            className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setLightboxImage(null)}
+          >
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="absolute top-4 right-4 text-white text-4xl hover:text-red-500 transition-colors"
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+            <img
+              src={placeholderImages[(lightboxImage - 1) % placeholderImages.length]}
+              alt={businessData.gallery.find(g => g.id === lightboxImage)?.alt}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg border border-gray-800"
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// REVIEWS SECTION
+// ============================================
+function ReviewsSection() {
+  const [currentReview, setCurrentReview] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentReview((prev) => (prev + 1) % businessData.reviews.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <section id="opiniones" className="py-20 lg:py-32 bg-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <span className="text-red-500 font-bold text-sm uppercase tracking-[0.3em]">Testimonios</span>
+          <h2 className="font-bebas text-4xl lg:text-5xl font-bold mt-4 mb-6 text-white tracking-wider">
+            LO QUE DICEN{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">NUESTROS CLIENTES</span>
+          </h2>
+          
+          <div className="inline-flex flex-col items-center bg-gray-900 rounded-2xl p-6 border border-gray-800">
+            <div className="text-6xl font-bold text-red-500 font-bebas tracking-wider">{businessData.rating}</div>
+            <div className="flex mt-2 mb-1">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className="text-2xl text-red-500">★</span>
+              ))}
+            </div>
+            <div className="text-gray-500">Puntuación perfecta en {businessData.totalReviews} opiniones</div>
+            <a
+              href={businessData.googleMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 text-red-500 hover:text-red-400 text-sm flex items-center gap-1"
+            >
+              Ver todas las opiniones en Google →
+            </a>
+          </div>
+        </div>
+
+        <div className="relative max-w-4xl mx-auto">
+          <div className="overflow-hidden">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${currentReview * 100}%)` }}
+            >
+              {businessData.reviews.map((review) => (
+                <div key={review.id} className="w-full flex-shrink-0 px-4">
+                  <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+                    <div className="flex mb-4">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className={`text-xl ${i < review.rating ? 'text-red-500' : 'text-gray-700'}`}>★</span>
+                      ))}
+                    </div>
+                    
+                    <p className="text-gray-300 text-lg leading-relaxed mb-6 italic">
+                      "{review.text}"
+                    </p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-bold">
+                          {review.author.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-white">{review.author}</div>
+                          <div className="text-gray-600 text-sm">{review.date}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span className="text-green-500">✓</span>
+                        Verificado en Google
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-2 mt-8">
+            {businessData.reviews.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentReview(i)}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  i === currentReview 
+                    ? 'bg-red-500 w-8' 
+                    : 'bg-gray-700 hover:bg-gray-600'
+                }`}
+                aria-label={`Ir a opinión ${i + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// SCHEDULE SECTION
+// ============================================
+function ScheduleSection() {
+  const [currentStatus, setCurrentStatus] = useState({ isOpen: false, message: '' });
+
+  useEffect(() => {
+    const checkStatus = () => {
+      const now = new Date();
+      const days = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+      const today = days[now.getDay()];
+      const schedule = businessData.schedule[today];
+      
+      if (schedule.closed) {
+        setCurrentStatus({ isOpen: false, message: 'Cerrado hoy' });
+        return;
+      }
+
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const [openH, openM] = schedule.open.split(':').map(Number);
+      const [closeH, closeM] = schedule.close.split(':').map(Number);
+      
+      const openTime = openH * 60 + openM;
+      const closeTime = closeH * 60 + closeM;
+
+      if (currentTime >= openTime && currentTime < closeTime) {
+        setCurrentStatus({ isOpen: true, message: `Cierra a las ${schedule.close}` });
+      } else if (currentTime < openTime) {
+        setCurrentStatus({ isOpen: false, message: `Abre a las ${schedule.open}` });
+      } else {
+        setCurrentStatus({ isOpen: false, message: 'Cerrado' });
+      }
+    };
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const days = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+  const today = days[(new Date().getDay() + 6) % 7];
+
+  return (
+    <section id="horarios" className="py-20 lg:py-32 bg-gradient-to-b from-black via-gray-950 to-black">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <span className="text-red-500 font-bold text-sm uppercase tracking-[0.3em]">Horarios</span>
+          <h2 className="font-bebas text-4xl lg:text-5xl font-bold mt-4 mb-6 text-white tracking-wider">
+            HORARIO DE{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">ATENCIÓN</span>
+          </h2>
+          
+          <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-lg ${
+            currentStatus.isOpen 
+              ? 'bg-green-900/30 border border-green-600/30' 
+              : 'bg-gray-900 border border-gray-800'
+          }`}>
+            <span className={`w-3 h-3 rounded-full animate-pulse ${
+              currentStatus.isOpen ? 'bg-green-500' : 'bg-gray-500'
+            }`} />
+            <span className={currentStatus.isOpen ? 'text-green-400' : 'text-gray-400'}>
+              {currentStatus.isOpen ? 'Abierto ahora' : 'Cerrado'} · {currentStatus.message}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+          {days.map((day) => {
+            const schedule = businessData.schedule[day];
+            const isToday = day === today;
+            
+            return (
+              <div
+                key={day}
+                className={`flex items-center justify-between px-6 py-4 border-b border-gray-800 last:border-0 ${
+                  isToday ? 'bg-red-900/20' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {isToday && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+                  <span className={`capitalize ${isToday ? 'text-red-400 font-semibold' : 'text-gray-400'}`}>
+                    {day}
+                  </span>
+                  {isToday && <span className="text-xs text-red-500 bg-red-900/30 px-2 py-1 rounded uppercase tracking-wider">Hoy</span>}
+                </div>
+                <div className="text-right text-gray-400">
+                  {schedule.closed ? (
+                    <span className="text-gray-600">Cerrado</span>
+                  ) : (
+                    <span>{schedule.open} - {schedule.close}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-center text-gray-600 text-sm mt-6">
+          ⚠️ Solo trabajamos con cita previa. Reserva tu sesión con antelación.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// CONTACT SECTION
+// ============================================
+function ContactSection() {
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+  const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormStatus('sending');
+    
+    setTimeout(() => {
+      setFormStatus('success');
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      setTimeout(() => setFormStatus('idle'), 3000);
+    }, 1500);
+  };
+
+  return (
+    <section id="contacto" className="py-20 lg:py-32 bg-black">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <span className="text-red-500 font-bold text-sm uppercase tracking-[0.3em]">Contacto</span>
+          <h2 className="font-bebas text-4xl lg:text-5xl font-bold mt-4 mb-6 text-white tracking-wider">
+            VISÍTANOS EN{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">MADRID</span>
+          </h2>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-12">
+          <div className="space-y-8">
+            <div className="aspect-video rounded-2xl overflow-hidden border border-gray-800">
+              <iframe
+                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.5!2d${businessData.coordinates.lng}!3d${businessData.coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDDCsDI0JzI2LjkiTiAzwrAzOCc0OS45Ilc!5e0!3m2!1ses!2ses!4v1234567890`}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ubicación de Shic de Pablo Tattoo"
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <a
+                href={`tel:${businessData.phone}`}
+                className="flex items-center gap-4 p-4 bg-gray-900 rounded-xl border border-gray-800 hover:border-red-600/50 transition-all"
+              >
+                <div className="w-12 h-12 rounded-lg bg-red-900/30 flex items-center justify-center text-2xl">📞</div>
+                <div>
+                  <div className="text-gray-500 text-sm">Teléfono</div>
+                  <div className="text-white font-semibold">{businessData.phone}</div>
+                </div>
+              </a>
+
+              <a
+                href={`mailto:${businessData.email}`}
+                className="flex items-center gap-4 p-4 bg-gray-900 rounded-xl border border-gray-800 hover:border-red-600/50 transition-all"
+              >
+                <div className="w-12 h-12 rounded-lg bg-red-900/30 flex items-center justify-center text-2xl">✉️</div>
+                <div>
+                  <div className="text-gray-500 text-sm">Email</div>
+                  <div className="text-white font-semibold text-sm">{businessData.email}</div>
+                </div>
+              </a>
+
+              <a
+                href={businessData.googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-4 bg-gray-900 rounded-xl border border-gray-800 hover:border-red-600/50 transition-all sm:col-span-2"
+              >
+                <div className="w-12 h-12 rounded-lg bg-red-900/30 flex items-center justify-center text-2xl">📍</div>
+                <div>
+                  <div className="text-gray-500 text-sm">Dirección</div>
+                  <div className="text-white font-semibold">{businessData.address}</div>
+                </div>
+              </a>
+            </div>
+
+            <div className="flex gap-4">
+              {['instagram', 'tiktok', 'facebook', 'youtube'].map((social) => (
+                <a
+                  key={social}
+                  href="#"
+                  className="w-12 h-12 rounded-lg bg-gray-900 border border-gray-800 hover:border-red-600/50 hover:bg-red-900/20 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all"
+                  aria-label={`Seguir en ${social}`}
+                >
+                  {social === 'instagram' && '📸'}
+                  {social === 'tiktok' && '🎵'}
+                  {social === 'facebook' && '📘'}
+                  {social === 'youtube' && '▶️'}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
+            <h3 className="font-bebas text-2xl font-bold mb-6 text-white tracking-wider">ENVÍANOS UN MENSAJE</h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Nombre</label>
+                <input
+                  type="text"
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-red-500 transition-colors"
+                  placeholder="Tu nombre"
+                />
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="email" className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    className="w-full px-4 py-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-red-500 transition-colors"
+                    placeholder="tu@email.com"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Teléfono</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-red-500 transition-colors"
+                    placeholder="Tu teléfono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Cuéntanos tu idea</label>
+                <textarea
+                  id="message"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  required
+                  rows={4}
+                  className="w-full px-4 py-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-red-500 transition-colors resize-none"
+                  placeholder="Describe el tatuaje que tienes en mente..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={formStatus === 'sending'}
+                className="w-full py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg text-white font-bold uppercase tracking-wider transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {formStatus === 'sending' ? 'Enviando...' : formStatus === 'success' ? '✓ Mensaje enviado' : 'Enviar mensaje'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// FOOTER
+// ============================================
+function Footer() {
+  const currentYear = new Date().getFullYear();
+  
+  const navLinks = [
+    { href: "#inicio", label: "Inicio" },
+    { href: "#nosotros", label: "Nosotros" },
+    { href: "#servicios", label: "Servicios" },
+    { href: "#galeria", label: "Galería" },
+    { href: "#opiniones", label: "Opiniones" },
+    { href: "#contacto", label: "Contacto" },
+  ];
+
+  return (
+    <footer className="bg-gray-950 border-t border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
+                <span className="text-white text-lg font-bebas font-bold">SP</span>
+              </div>
+              <span className="font-bebas text-xl font-bold text-white tracking-wider">SHIC DE PABLO</span>
+            </div>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Estudio de tatuajes profesional en Madrid. 
+              Arte corporal personalizado que cuenta tu historia.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-white font-bold uppercase tracking-wider mb-4">Enlaces</h4>
+            <nav className="space-y-2">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="block text-gray-500 hover:text-red-500 transition-colors text-sm"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            <h4 className="text-white font-bold uppercase tracking-wider mb-4">Horario</h4>
+            <div className="space-y-2 text-sm text-gray-500">
+              <p>Lunes: Cerrado</p>
+              <p>Martes - Viernes: 11:00 - 20:00</p>
+              <p>Sábado: 11:00 - 18:00</p>
+              <p>Domingo: Cerrado</p>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-white font-bold uppercase tracking-wider mb-4">Contacto</h4>
+            <div className="space-y-2 text-sm text-gray-500">
+              <p>{businessData.address}</p>
+              <a href={`tel:${businessData.phone}`} className="block hover:text-red-500 transition-colors">
+                {businessData.phone}
+              </a>
+              <a href={`mailto:${businessData.email}`} className="block hover:text-red-500 transition-colors">
+                {businessData.email}
+              </a>
+              <p className="text-red-500">{businessData.instagram}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-gray-600 text-sm">
+            © {currentYear} Shic de Pablo Tattoo. Todos los derechos reservados.
+          </p>
+          <div className="flex gap-4 text-sm text-gray-600">
+            <a href="#" className="hover:text-red-500 transition-colors">Política de privacidad</a>
+            <a href="#" className="hover:text-red-500 transition-colors">Aviso legal</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ============================================
+// BOOKING MODAL
+// ============================================
+function BookingModal({ onClose, preselectedService }: { onClose: () => void; preselectedService: string }) {
+  const [step, setStep] = useState(1);
+  const [booking, setBooking] = useState({
+    service: preselectedService || '',
+    date: '',
+    time: '',
+    name: '',
+    phone: '',
+    email: '',
+    notes: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+  const [bookingNumber, setBookingNumber] = useState('');
+
+  const totalSteps = 5;
+
+  const validateStep = () => {
+    const newErrors: Record<string, string> = {};
+
+    switch (step) {
+      case 1:
+        if (!booking.service) newErrors.service = 'Selecciona un servicio';
+        break;
+      case 2:
+        if (!booking.date) newErrors.date = 'Selecciona una fecha';
+        break;
+      case 3:
+        if (!booking.time) newErrors.time = 'Selecciona una hora';
+        break;
+      case 4:
+        if (!booking.name.trim()) newErrors.name = 'El nombre es obligatorio';
+        if (!booking.phone.trim()) newErrors.phone = 'El teléfono es obligatorio';
+        else if (!/^[0-9+\s]{9,15}$/.test(booking.phone.replace(/\s/g, ''))) {
+          newErrors.phone = 'Teléfono inválido';
+        }
+        if (!booking.email.trim()) newErrors.email = 'El email es obligatorio';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(booking.email)) {
+          newErrors.email = 'Email inválido';
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const nextStep = () => {
+    if (validateStep()) setStep(step + 1);
+  };
+
+  const prevStep = () => setStep(step - 1);
+
+  const handleSubmit = () => {
+    if (!validateStep()) return;
+    
+    setIsSubmitting(true);
+    const num = `SDP${Date.now().toString(36).toUpperCase()}`;
+    setBookingNumber(num);
+    
+    const bookings = JSON.parse(localStorage.getItem('shicdepablo_bookings') || '[]');
+    bookings.push({ ...booking, bookingNumber: num, createdAt: new Date().toISOString() });
+    localStorage.setItem('shicdepablo_bookings', JSON.stringify(bookings));
+    
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsComplete(true);
+    }, 1500);
+  };
+
+  const getAvailableDates = () => {
+    const dates: string[] = [];
+    const today = new Date();
+    
+    for (let i = 1; i <= 30; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dayOfWeek = date.getDay();
+      // Closed on Sunday (0) and Monday (1)
+      if (dayOfWeek !== 0 && dayOfWeek !== 1) {
+        dates.push(date.toISOString().split('T')[0]);
+      }
+    }
+    return dates;
+  };
+
+  const getTimeSlots = () => {
+    if (!booking.date) return [];
+    
+    const date = new Date(booking.date);
+    const dayOfWeek = date.getDay();
+    
+    const slots: string[] = [];
+    
+    if (dayOfWeek === 6) {
+      // Saturday: 11:00 - 18:00
+      for (let h = 11; h <= 17; h++) {
+        slots.push(`${h.toString().padStart(2, '0')}:00`);
+      }
+    } else {
+      // Tue-Fri: 11:00 - 20:00
+      for (let h = 11; h <= 19; h++) {
+        slots.push(`${h.toString().padStart(2, '0')}:00`);
+      }
+    }
+    
+    return slots;
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-red-900/20">
+        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-6 flex items-center justify-between z-10">
+          <div>
+            <h2 className="font-bebas text-2xl font-bold text-white tracking-wider">
+              {isComplete ? '¡CITA CONFIRMADA!' : 'RESERVAR CITA'}
+            </h2>
+            {!isComplete && (
+              <p className="text-gray-500 text-sm mt-1">Paso {step} de {totalSteps}</p>
+            )}
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-red-500 transition-colors text-2xl" aria-label="Cerrar">×</button>
+        </div>
+
+        {!isComplete && (
+          <div className="px-6 pt-4">
+            <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-red-600 to-red-700 transition-all duration-300" style={{ width: `${(step / totalSteps) * 100}%` }} />
+            </div>
+          </div>
+        )}
+
+        <div className="p-6">
+          {isComplete ? (
+            <div className="text-center py-8">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-900/30 border border-green-600/30 flex items-center justify-center">
+                <span className="text-5xl text-green-500">✓</span>
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-white">¡Gracias!</h3>
+              <p className="text-gray-400 mb-6">Tu cita ha sido reservada. Te contactaremos pronto para confirmar.</p>
+              
+              <div className="bg-gray-800 rounded-xl p-4 mb-6 text-left">
+                <p className="text-sm text-gray-500 mb-2">Número de referencia:</p>
+                <p className="text-2xl font-mono font-bold text-red-500">{bookingNumber}</p>
+              </div>
+              
+              <div className="bg-gray-800/50 rounded-xl p-4 text-left space-y-2 border border-gray-700">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Servicio:</span>
+                  <span className="text-white font-medium">{booking.service}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Fecha:</span>
+                  <span className="text-white">{formatDate(booking.date)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Hora:</span>
+                  <span className="text-white">{booking.time}</span>
+                </div>
+              </div>
+              
+              <p className="text-sm text-gray-600 mt-6">
+                Si necesitas cancelar, avisa con 24h de antelación.
+              </p>
+              
+              <button onClick={onClose} className="mt-6 w-full py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-lg text-white font-bold uppercase tracking-wider">
+                Cerrar
+              </button>
+            </div>
+          ) : (
+            <>
+              {step === 1 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold mb-4 text-white uppercase tracking-wider">¿Qué te interesa?</h3>
+                  <select
+                    value={booking.service}
+                    onChange={(e) => setBooking({ ...booking, service: e.target.value })}
+                    className={`w-full px-4 py-3 bg-black border rounded-lg text-white focus:outline-none focus:border-red-500 ${errors.service ? 'border-red-500' : 'border-gray-700'}`}
+                  >
+                    <option value="">Selecciona un servicio</option>
+                    {businessData.services.map((s) => (
+                      <option key={s.id} value={s.name}>{s.name} - {s.price}</option>
+                    ))}
+                  </select>
+                  {errors.service && <p className="text-red-500 text-sm">{errors.service}</p>}
+                  
+                  <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-4 mt-4">
+                    <p className="text-red-400 text-sm">
+                      🎨 Si no estás seguro, selecciona "Tatuaje Personalizado" y te asesoramos.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4 text-white uppercase tracking-wider">¿Qué día prefieres?</h3>
+                  <div className="grid grid-cols-4 gap-2 max-h-72 overflow-y-auto">
+                    {getAvailableDates().map((date) => {
+                      const d = new Date(date);
+                      return (
+                        <button
+                          key={date}
+                          onClick={() => setBooking({ ...booking, date, time: '' })}
+                          className={`p-3 rounded-lg border text-center transition-all ${
+                            booking.date === date
+                              ? 'border-red-500 bg-red-900/30'
+                              : 'border-gray-700 hover:border-red-600/50 bg-black'
+                          }`}
+                        >
+                          <div className="text-xs text-gray-500">{d.toLocaleDateString('es-ES', { weekday: 'short' })}</div>
+                          <div className="text-lg font-bold text-white">{d.getDate()}</div>
+                          <div className="text-xs text-gray-500">{d.toLocaleDateString('es-ES', { month: 'short' })}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {errors.date && <p className="text-red-500 text-sm mt-2">{errors.date}</p>}
+                </div>
+              )}
+
+              {step === 3 && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4 text-white uppercase tracking-wider">¿A qué hora?</h3>
+                  <p className="text-gray-500 text-sm mb-4">{formatDate(booking.date)}</p>
+                  
+                  <div className="grid grid-cols-3 gap-2">
+                    {getTimeSlots().map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setBooking({ ...booking, time })}
+                        className={`py-3 px-2 rounded-lg border text-center transition-all ${
+                          booking.time === time
+                            ? 'border-red-500 bg-red-900/30 text-red-400'
+                            : 'border-gray-700 hover:border-red-600/50 text-gray-300 bg-black'
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {errors.time && <p className="text-red-500 text-sm mt-2">{errors.time}</p>}
+                </div>
+              )}
+
+              {step === 4 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold mb-4 text-white uppercase tracking-wider">Tus datos</h3>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Nombre *</label>
+                    <input
+                      type="text"
+                      value={booking.name}
+                      onChange={(e) => setBooking({ ...booking, name: e.target.value })}
+                      className={`w-full px-4 py-3 bg-black border rounded-lg text-white focus:outline-none focus:border-red-500 ${errors.name ? 'border-red-500' : 'border-gray-700'}`}
+                      placeholder="Tu nombre"
+                    />
+                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Teléfono *</label>
+                    <input
+                      type="tel"
+                      value={booking.phone}
+                      onChange={(e) => setBooking({ ...booking, phone: e.target.value })}
+                      className={`w-full px-4 py-3 bg-black border rounded-lg text-white focus:outline-none focus:border-red-500 ${errors.phone ? 'border-red-500' : 'border-gray-700'}`}
+                      placeholder="+34 600 000 000"
+                    />
+                    {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Email *</label>
+                    <input
+                      type="email"
+                      value={booking.email}
+                      onChange={(e) => setBooking({ ...booking, email: e.target.value })}
+                      className={`w-full px-4 py-3 bg-black border rounded-lg text-white focus:outline-none focus:border-red-500 ${errors.email ? 'border-red-500' : 'border-gray-700'}`}
+                      placeholder="tu@email.com"
+                    />
+                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2 uppercase tracking-wider">Describe tu idea</label>
+                    <textarea
+                      value={booking.notes}
+                      onChange={(e) => setBooking({ ...booking, notes: e.target.value })}
+                      className="w-full px-4 py-3 bg-black border border-gray-700 rounded-lg text-white focus:outline-none focus:border-red-500 resize-none"
+                      rows={3}
+                      placeholder="Cuéntanos sobre el tatuaje que quieres..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              {step === 5 && (
+                <div>
+                  <h3 className="text-lg font-bold mb-4 text-white uppercase tracking-wider">Confirma tu cita</h3>
+                  
+                  <div className="bg-black rounded-xl p-4 space-y-3 border border-gray-700">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Servicio:</span>
+                      <span className="text-white font-semibold">{booking.service}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Fecha:</span>
+                      <span className="text-white">{formatDate(booking.date)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Hora:</span>
+                      <span className="text-white">{booking.time}</span>
+                    </div>
+                    <div className="border-t border-gray-700 pt-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Nombre:</span>
+                        <span className="text-white">{booking.name}</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-gray-500">Teléfono:</span>
+                        <span className="text-white">{booking.phone}</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-gray-500">Email:</span>
+                        <span className="text-white text-sm">{booking.email}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-4 bg-red-900/20 border border-red-600/30 rounded-lg">
+                    <p className="text-red-400 text-sm">
+                      ⚠️ Recuerda: Te contactaremos para confirmar la cita y discutir los detalles del diseño.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-4 mt-8">
+                {step > 1 && (
+                  <button onClick={prevStep} className="flex-1 py-3 border border-gray-700 hover:border-gray-600 rounded-lg text-gray-300 font-bold uppercase tracking-wider transition-colors">
+                    Anterior
+                  </button>
+                )}
+                {step < totalSteps ? (
+                  <button onClick={nextStep} className="flex-1 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg text-white font-bold uppercase tracking-wider transition-all">
+                    Siguiente
+                  </button>
+                ) : (
+                  <button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg text-white font-bold uppercase tracking-wider transition-all disabled:opacity-50">
+                    {isSubmitting ? 'Reservando...' : 'Confirmar Cita'}
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// CHATBOT COMPONENT
+// ============================================
+function Chatbot({ isOpen, setIsOpen, setShowBooking }: {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  setShowBooking: (show: boolean) => void;
+}) {
+  const [messages, setMessages] = useState<Array<{
+    id: number;
+    type: 'bot' | 'user';
+    text: string;
+    buttons?: Array<{ label: string; action: string }>;
+    timestamp: Date;
+  }>>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [hasGreeted, setHasGreeted] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    if (isOpen && !hasGreeted) {
+      setHasGreeted(true);
+      setTimeout(() => {
+        addBotMessage(
+          `¡Hey! 🤘 Bienvenido/a a ${businessData.shortName}. Soy el asistente del estudio.\n\n¿En qué puedo ayudarte?`,
+          [
+            { label: '📅 Pedir cita', action: 'cita' },
+            { label: '🎨 Estilos', action: 'estilos' },
+            { label: '💰 Precios', action: 'precios' },
+            { label: '🕐 Horarios', action: 'horarios' },
+            { label: '📍 Ubicación', action: 'ubicacion' },
+            { label: '📸 Instagram', action: 'instagram' },
+          ]
+        );
+      }, 500);
+    }
+  }, [isOpen, hasGreeted]);
+
+  const addBotMessage = (text: string, buttons?: Array<{ label: string; action: string }>) => {
+    setIsTyping(true);
+    setTimeout(() => {
+      setMessages((prev) => [...prev, { id: Date.now(), type: 'bot', text, buttons, timestamp: new Date() }]);
+      setIsTyping(false);
+    }, 800 + Math.random() * 700);
+  };
+
+  const addUserMessage = (text: string) => {
+    setMessages((prev) => [...prev, { id: Date.now(), type: 'user', text, timestamp: new Date() }]);
+  };
+
+  const handleAction = (action: string) => {
+    switch (action) {
+      case 'cita':
+        addUserMessage('Quiero pedir una cita');
+        addBotMessage('¡Genial! 🔥 Te abro el formulario de citas para que reserves tu sesión.');
+        setTimeout(() => setShowBooking(true), 1500);
+        break;
+        
+      case 'estilos':
+        addUserMessage('¿Qué estilos hacéis?');
+        addBotMessage(
+          `🎨 Dominamos varios estilos:\n\n• **Realismo** - Retratos y detalles fotográficos\n• **Blackwork** - Diseños en negro sólido\n• **Fine Line** - Líneas finas y delicadas\n• **Neotradicional** - Colores vibrantes\n• **Lettering** - Tipografía artística\n\n¿Te interesa alguno en particular?`,
+          [{ label: '📅 Pedir cita', action: 'cita' }, { label: '💰 Ver precios', action: 'precios' }]
+        );
+        break;
+        
+      case 'precios':
+        addUserMessage('¿Cuáles son los precios?');
+        addBotMessage(
+          `💰 Precios orientativos:\n\n• Tatuaje pequeño (lettering): desde 80€\n• Fine Line: desde 100€\n• Blackwork: desde 150€\n• Realismo: desde 200€\n• Cover Up: desde 250€\n\n💡 El precio final depende del tamaño y complejidad. ¡Cuéntanos tu idea!`,
+          [{ label: '📅 Pedir cita', action: 'cita' }]
+        );
+        break;
+        
+      case 'horarios':
+        addUserMessage('¿Cuál es el horario?');
+        addBotMessage(
+          `🕐 Nuestro horario:\n\n• Lunes: Cerrado\n• Martes - Viernes: 11:00 - 20:00\n• Sábado: 11:00 - 18:00\n• Domingo: Cerrado\n\n⚠️ Solo trabajamos con cita previa.`,
+          [{ label: '📅 Reservar cita', action: 'cita' }]
+        );
+        break;
+        
+      case 'ubicacion':
+        addUserMessage('¿Dónde estáis?');
+        addBotMessage(
+          `📍 Estamos en:\n\n${businessData.address}\n\n🚇 Muy bien comunicado\n\n¿Vienes a conocernos?`,
+          [{ label: '📅 Reservar cita', action: 'cita' }, { label: '📞 Llamar', action: 'contactar' }]
+        );
+        break;
+        
+      case 'instagram':
+        addUserMessage('¿Dónde puedo ver vuestros trabajos?');
+        addBotMessage(
+          `📸 ¡Síguenos en Instagram!\n\n${businessData.instagram}\n\nAhí subimos nuestros últimos trabajos, vídeos del proceso y más. ¡No te lo pierdas!`,
+          [{ label: '📅 Pedir cita', action: 'cita' }]
+        );
+        break;
+        
+      case 'contactar':
+        addUserMessage('Quiero contactar');
+        addBotMessage(
+          `📞 Puedes contactarnos:\n\n• Teléfono: ${businessData.phone}\n• Email: ${businessData.email}\n• Instagram: ${businessData.instagram}\n• WhatsApp: Usa el botón verde\n\n¿O prefieres reservar directamente?`,
+          [{ label: '📅 Reservar cita', action: 'cita' }]
+        );
+        break;
+        
+      default:
+        addBotMessage(
+          '🤔 No he pillado eso. ¿En qué puedo ayudarte?',
+          [
+            { label: '📅 Pedir cita', action: 'cita' },
+            { label: '🎨 Estilos', action: 'estilos' },
+            { label: '📞 Contactar', action: 'contactar' },
+          ]
+        );
+    }
+  };
+
+  const processMessage = (text: string) => {
+    const lowerText = text.toLowerCase();
+    
+    if (lowerText.match(/cita|reserva|sesion|tatuar/)) {
+      handleAction('cita');
+    } else if (lowerText.match(/estilo|tipo|hacen|realismo|blackwork|fine/)) {
+      handleAction('estilos');
+    } else if (lowerText.match(/precio|cuesta|costar|tarifa|cuanto/)) {
+      handleAction('precios');
+    } else if (lowerText.match(/horario|abr|cerr|cuando/)) {
+      handleAction('horarios');
+    } else if (lowerText.match(/donde|ubicacion|direccion|llegar|metro/)) {
+      handleAction('ubicacion');
+    } else if (lowerText.match(/instagram|insta|trabajos|fotos|portfolio/)) {
+      handleAction('instagram');
+    } else if (lowerText.match(/telefono|llamar|contacto|email|whatsapp/)) {
+      handleAction('contactar');
+    } else if (lowerText.match(/gracias|adios|bye|chao|vale/)) {
+      addBotMessage(`¡Gracias por escribirnos! 🤘 Esperamos verte pronto en el estudio. ¡Hasta luego!`);
+    } else if (lowerText.match(/hola|buenas|hey|que tal/)) {
+      addBotMessage('¡Hey! 🔥 ¿Qué necesitas?', [
+        { label: '📅 Pedir cita', action: 'cita' },
+        { label: '🎨 Estilos', action: 'estilos' },
+        { label: '💰 Precios', action: 'precios' },
+      ]);
+    } else {
+      handleAction('unknown');
+    }
+  };
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    addUserMessage(input);
+    const userInput = input;
+    setInput('');
+    setTimeout(() => processMessage(userInput), 300);
+  };
+
+  const formatTime = (date: Date) => date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`fixed bottom-24 right-6 z-[9998] w-16 h-16 rounded-xl bg-gradient-to-br from-red-600 to-red-800 shadow-xl shadow-red-600/30 flex items-center justify-center text-3xl transition-transform duration-300 hover:scale-110 ${isOpen ? 'scale-0' : 'scale-100'}`}
+        aria-label="Abrir chat"
+      >
+        💬
+        <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-xs text-white animate-pulse">1</span>
+      </button>
+
+      <div className={`fixed bottom-24 right-6 z-[9998] w-[360px] max-w-[calc(100vw-3rem)] bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl shadow-red-900/20 overflow-hidden transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+        <div className="bg-gradient-to-r from-red-600 to-red-800 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-white text-lg font-bebas font-bold">SP</div>
+            <div>
+              <div className="font-bold text-white">{businessData.shortName}</div>
+              <div className="text-xs text-white/80 flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                Asistente · En línea
+              </div>
+            </div>
+          </div>
+          <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white text-2xl" aria-label="Cerrar chat">×</button>
+        </div>
+
+        <div className="h-80 overflow-y-auto p-4 space-y-4 bg-black">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                msg.type === 'user'
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 text-white rounded-br-none'
+                  : 'bg-gray-800 text-gray-300 rounded-bl-none border border-gray-700'
+              }`}>
+                <p className="whitespace-pre-line text-sm">{msg.text}</p>
+                {msg.buttons && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {msg.buttons.map((btn, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleAction(btn.action)}
+                        className="text-xs bg-red-900/30 hover:bg-red-900/50 text-red-400 px-3 py-1.5 rounded-full transition-colors border border-red-600/30"
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className={`text-xs mt-2 ${msg.type === 'user' ? 'text-white/60' : 'text-gray-600'}`}>
+                  {formatTime(msg.timestamp)}
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="bg-gray-800 rounded-2xl rounded-bl-none px-4 py-3 border border-gray-700">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="p-4 bg-gray-900 border-t border-gray-800">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Escribe tu mensaje..."
+              className="flex-1 px-4 py-3 bg-black border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-red-500"
+            />
+            <button
+              onClick={handleSend}
+              className="px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-lg text-white hover:opacity-90 transition-opacity"
+              aria-label="Enviar mensaje"
+            >
+              ➤
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ============================================
+// WHATSAPP BUTTON
+// ============================================
+function WhatsAppButton() {
+  const message = encodeURIComponent(`¡Hola! Me gustaría pedir información para tatuarme en ${businessData.name}. 🎨`);
+  
+  return (
+    <a
+      href={`https://wa.me/${businessData.whatsapp}?text=${message}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-6 right-6 z-[9998] w-14 h-14 bg-green-500 hover:bg-green-600 rounded-xl shadow-xl shadow-green-500/30 flex items-center justify-center transition-all duration-300 hover:scale-110"
+      aria-label="Contactar por WhatsApp"
+    >
+      <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+      </svg>
+    </a>
+  );
+}
+
+export default App;
